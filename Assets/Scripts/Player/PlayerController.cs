@@ -6,8 +6,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody2D playerRigidBody2D;
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float diagonalMovementSpeedMultiplier = 1f;
+    [SerializeField] internal Vector2 startPosition;
     private Vector2 movementDirection;
-    
+
+
+    private void Start()
+    {
+        transform.position = startPosition;
+    }
     void Update()
     {
         movementDirection.x = Input.GetAxisRaw("Horizontal");
