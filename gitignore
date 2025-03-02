@@ -2,7 +2,6 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
-.utmp/
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -10,6 +9,12 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+
+# Digger Internal Data
+/[Aa]ssets/[Dd]iggerData/[Ii]nternal/
+
+# Steam builds
+/Steam/ContentBuilder/content/windows_content
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -26,6 +31,13 @@
 
 # Visual Studio cache directory
 .vs/
+
+# Jetbrain Rider Cache
+/.idea/
+/Assets/Plugins/Editor/JetBrains*
+
+# UMotion AutoBackups
+/[Aa]ssets/[Uu]MotionData/[Aa]utoBackups
 
 # Gradle cache directory
 .gradle/
@@ -72,3 +84,19 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+mono_crash.*.json
+
+# various
+/Assets/Plugins/Zenject/Source/Zenject.csproj.meta
+/Assets/Plugins/Zenject/OptionalExtras/Signals/Zenject-Signals.csproj.meta
+/Assets/Plugins/Zenject/OptionalExtras/ReflectionBaking/Zenject-ReflectionBaking.csproj.meta
+
+link.xml*
+LiberationSans SDF - Fallback.asset
+
+#vegetation packages
+!Assets/BOXOPHOBIC/The Vegetation Engine/Core/Pipelines/*
+
+#terrain subtextures
+/Assets/Chicken-TerrainTools/WorkDir/*.png
+/Assets/Chicken-TerrainTools/WorkDir/*.png.meta
