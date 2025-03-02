@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
     [SerializeField] private GameObject wallPrefab;
-    [SerializeField] private GameObject floorPrefab;
-    [SerializeField] private GameObject coinPrefab;
+    [SerializeField] private List<GameObject> coinPrefabs;
     
     [SerializeField] private float noiseScaleMin;
     [SerializeField] private float noiseScaleMax;
-
+    
     [SerializeField] private int mapWidth = 50;
     [SerializeField] private int mapHeight = 50;
     
@@ -19,39 +19,58 @@ public class MapGenerator : MonoBehaviour
 
     [SerializeField] private int coinCount;
 
+    private float noiseScale;
     private int[,] noiseMap;
     private List<Vector2Int> floorPositions = new List<Vector2Int>();
+    
+    private static readonly Vector2Int[] neighborOffsets = new Vector2Int[]
+    {
+        new Vector2Int(-1, 0),
+        new Vector2Int(1, 0),
+        new Vector2Int(0, -1),
+        new Vector2Int(0, 1)
+    };
 
     private void Start()
     {
-        GenerateMap();
+        StartCoroutine(GenerateMap());
     }
 
-    internal void GenerateMap()
+    internal IEnumerator GenerateMap()
     {
         noiseMap = new int[mapWidth, mapHeight];
         floorPositions.Clear();
-        float noiseScale = Random.Range(noiseScaleMin, noiseScaleMax);
+        noiseScale = Random.Range(noiseScaleMin, noiseScaleMax);
 
         for (int x = 0; x < mapWidth; x++)
         {
             for (int y = 0; y < mapHeight; y++)
             {
                 if (IsCentralArea(x, y))
+                {
                     noiseMap[x, y] = 0;
+                }
                 else if (IsBorder(x, y))
+                {
                     noiseMap[x, y] = 1;
+                }
                 else
-                    noiseMap[x, y] = Mathf.PerlinNoise(x * noiseScale, y * noiseScale) > 0.5f ? 1 : 0;
+                {
+                    float noiseValue = Mathf.PerlinNoise(x * noiseScale, y * noiseScale);
+                    noiseMap[x, y] = (noiseValue > 0.5f) ? 1 : 0;
+                }
 
                 if (noiseMap[x, y] == 0)
+                {
                     floorPositions.Add(new Vector2Int(x, y));
+                }
             }
         }
         
         EnsureConnectivity();
         RenderMap();
         SpawnCoins();
+        yield return null;
     }
 
     private bool IsCentralArea(int x, int y)
@@ -69,7 +88,9 @@ public class MapGenerator : MonoBehaviour
     private void RenderMap()
     {
         if (mapParent != null)
+        {
             Destroy(mapParent.gameObject);
+        }
 
         mapParent = new GameObject("MapParent").transform;
         
@@ -84,10 +105,11 @@ public class MapGenerator : MonoBehaviour
             }
         }
     }
-
+    
     private void EnsureConnectivity()
     {
         Vector2Int start = new Vector2Int(mapWidth / 2, mapHeight / 2);
+        
         HashSet<Vector2Int> visited = BreadthFirstSearch(start);
 
         for (int x = 1; x < mapWidth - 1; x++)
@@ -102,7 +124,7 @@ public class MapGenerator : MonoBehaviour
             }
         }
     }
-
+    
     private HashSet<Vector2Int> BreadthFirstSearch(Vector2Int start)
     {
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
@@ -126,7 +148,7 @@ public class MapGenerator : MonoBehaviour
 
         return visited;
     }
-
+    
     private void CreatePathToNearestAccessible(Vector2Int start, HashSet<Vector2Int> visited)
     {
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
@@ -145,6 +167,13 @@ public class MapGenerator : MonoBehaviour
                     if (visited.Contains(neighbor))
                     {
                         ConnectPoints(start, neighbor);
+                        
+                        HashSet<Vector2Int> newVisited = BreadthFirstSearch(start);
+                        foreach (var nv in newVisited)
+                        {
+                            visited.Add(nv);
+                        }
+                        
                         return;
                     }
 
@@ -154,37 +183,70 @@ public class MapGenerator : MonoBehaviour
             }
         }
     }
-
+    
     private void ConnectPoints(Vector2Int from, Vector2Int to)
     {
-        Vector2Int current = from;
-
-        while (current != to)
+        List<Vector2Int> path = FindPathBFS(from, to);
+        foreach (Vector2Int p in path)
         {
-            noiseMap[current.x, current.y] = 0;
-
-            if (Random.value > 0.5f)
-            {
-                current.x += Mathf.Clamp(to.x - current.x, -1, 1);
-            }
-            else
-            {
-                current.y += Mathf.Clamp(to.y - current.y, -1, 1);
-            }
+            noiseMap[p.x, p.y] = 0;
         }
     }
 
+    private List<Vector2Int> FindPathBFS(Vector2Int start, Vector2Int goal)
+    {
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> parents = new Dictionary<Vector2Int, Vector2Int>();
+
+        queue.Enqueue(start);
+        parents[start] = start;
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+            
+            if (current == goal)
+                return ReconstructPath(parents, goal);
+            
+            foreach (Vector2Int neighbor in GetNeighbors(current))
+            {
+                if (!parents.ContainsKey(neighbor))
+                {
+                    parents[neighbor] = current;
+                    queue.Enqueue(neighbor);
+                }
+            }
+        }
+        
+        return new List<Vector2Int>();
+    }
+
+    private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> parents, Vector2Int goal)
+    {
+        List<Vector2Int> path = new List<Vector2Int>();
+        Vector2Int current = goal;
+        
+        while (parents[current] != current)
+        {
+            path.Add(current);
+            current = parents[current];
+        }
+        path.Add(current);
+        path.Reverse();
+        return path;
+    }
+    
     private List<Vector2Int> GetNeighbors(Vector2Int pos)
     {
-        List<Vector2Int> neighbors = new List<Vector2Int>
+        List<Vector2Int> neighbors = new List<Vector2Int>(4);
+        foreach (Vector2Int offset in neighborOffsets)
         {
-            new Vector2Int(pos.x - 1, pos.y),
-            new Vector2Int(pos.x + 1, pos.y),
-            new Vector2Int(pos.x, pos.y - 1),
-            new Vector2Int(pos.x, pos.y + 1)
-        };
-
-        neighbors.RemoveAll(n => n.x < 0 || n.y < 0 || n.x >= mapWidth || n.y >= mapHeight);
+            Vector2Int neighbor = pos + offset;
+            if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < mapWidth && neighbor.y < mapHeight)
+            {
+                neighbors.Add(neighbor);
+            }
+        }
         return neighbors;
     }
 
@@ -208,8 +270,9 @@ public class MapGenerator : MonoBehaviour
             int index = Random.Range(0, validPositions.Count);
             Vector2Int pos = validPositions[index];
             validPositions.RemoveAt(index);
-
-            Instantiate(coinPrefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity, mapParent);
+            
+            int randomCoinNumber = Random.Range(0, coinPrefabs.Count);
+            Instantiate(coinPrefabs[randomCoinNumber], new Vector3(pos.x, pos.y, 0), Quaternion.identity, mapParent);
         }
     }
 
