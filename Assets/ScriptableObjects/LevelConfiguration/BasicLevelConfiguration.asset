@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ea60ddfad0382742b99f2842ce484ae, type: 3}
+  m_Name: BasicLevelConfiguration
+  m_EditorClassIdentifier: 
+  LevelWidth: 70
+  LevelHeight: 70
+  NoiseScaleMin: 0.2
+  NoiseScaleMax: 0.3
+  ObstacleWithCoinPrefabs:
+  - {fileID: 6457724625725623290, guid: 22cfd51136e543844b09a48432225cb9, type: 3}
+  - {fileID: 6457724625725623290, guid: 343059cb855211e40b5e931a5eb23b56, type: 3}
+  - {fileID: 6457724625725623290, guid: 7fe1005e4df072f45acc946071f6f25b, type: 3}
+  CoinCount: 10
+  CoinValueToComplete: 10
+  WallTile: {fileID: 11400000, guid: 490908e987087c94886ff28be2484e11, type: 2}
+  FloorTile: {fileID: 11400000, guid: 5fd7e49dac42f4d40a5daad81dd6cfcf, type: 2}
