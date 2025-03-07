@@ -1,13 +1,17 @@
 using System;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class GameEvents : MonoBehaviour
 {
-    public static GameEvents Current;
+    public static GameEvents Current { get; private set; }
 
     private void Awake()
     {
-        Current = this;
+        if (Current != null && Current != this)
+            Destroy(this);  
+        else
+            Current = this;
     }
 
     public event Action OnGenerateMap;
